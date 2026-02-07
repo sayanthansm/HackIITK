@@ -1,0 +1,64 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "stage",
+      "criticality": "high",
+      "id": "P1"
+    },
+    {
+      "type": "stage",
+      "criticality": "high",
+      "id": "P2"
+    },
+    {
+      "type": "stage",
+      "criticality": "high",
+      "id": "P3"
+    },
+    {
+      "type": "stage",
+      "criticality": "high",
+      "id": "P4"
+    },
+    {
+      "type": "stage",
+      "criticality": "high",
+      "id": "P5"
+    },
+    {
+      "type": "stage",
+      "criticality": "high",
+      "id": "P6"
+    }
+  ],
+  "edges": [
+    {
+      "relation": "flow",
+      "source": "P1",
+      "target": "P2"
+    },
+    {
+      "relation": "flow",
+      "source": "P2",
+      "target": "P3"
+    },
+    {
+      "relation": "flow",
+      "source": "P3",
+      "target": "P4"
+    },
+    {
+      "relation": "flow",
+      "source": "P4",
+      "target": "P5"
+    },
+    {
+      "relation": "flow",
+      "source": "P5",
+      "target": "P6"
+    }
+  ]
+}
