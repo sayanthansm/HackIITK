@@ -1,0 +1,28 @@
+{
+  "compromised_nodes": [
+    "LIT301",
+    "LIT101",
+    "LIT401",
+    "AIT203",
+    "AIT402",
+    "AIT503",
+    "AIT502",
+    "AIT504",
+    "PIT503",
+    "PIT501",
+    "PIT502",
+    "DPIT301",
+    "AIT202",
+    "FIT201"
+  ],
+  "attack_stages": [
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5"
+  ],
+  "risk_score": 24,
+  "risk_level": "HIGH",
+  "summary": "Attack affects 14 components across 5 process stages.\nPrimary impact stages: P1, P2, P3, P4, P5.\nOverall risk level: HIGH."
+}
