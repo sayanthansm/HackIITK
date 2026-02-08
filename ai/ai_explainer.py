@@ -94,7 +94,13 @@ def run_genai_reasoning(attack_chain, base_risk):
 
     final_risk = min(risk, 10)
 
-    confidence = round(min(0.5 + (final_risk / 20), 0.95), 2)
+    confidence = round(
+    min(
+        0.5 + 0.02*len(attack_chain) + 0.02*len(impacts),
+        0.95
+    ),
+    2
+)
 
     return {
         "ai_explanation": generate_explanation(attack_chain),

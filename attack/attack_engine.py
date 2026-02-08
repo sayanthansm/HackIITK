@@ -1,16 +1,28 @@
 import pandas as pd
-import os
 import numpy as np
+import json
+import networkx as nx
+import os
 
-# ---------- load ----------
-df = pd.read_csv("data/swat_attack.csv")
+# -----------------------------
+# CONFIG — change dataset here
+# -----------------------------
+DATA_PATH = "data/test_pipeline.csv"
 
-# ---------- find label column ----------
+print("Loading dataset:", DATA_PATH)
+df = pd.read_csv(DATA_PATH)
+
+# -----------------------------
+# find label column
+# -----------------------------
 label_col = None
 for c in df.columns:
     if "ATTACK" in c.upper():
         label_col = c
         break
+
+if not label_col:
+    raise ValueError("No Attack label column found")
 
 print("Label column:", label_col)
 
@@ -21,17 +33,27 @@ print("Total rows:", len(df))
 print("Attack rows:", len(attack_rows))
 print("Normal rows:", len(normal_rows))
 
-
-# ---------- numeric-only selection ----------
+# -----------------------------
+# numeric-only selection
+# -----------------------------
 numeric_df = df.select_dtypes(include="number")
 
 print("\nNumeric columns:", len(numeric_df.columns))
 
-# ---------- baseline vs late window ----------
-baseline = numeric_df.iloc[:1000].mean()
-late = numeric_df.iloc[-1000:].mean()
+if len(numeric_df.columns) == 0:
+    raise ValueError("No numeric columns found")
 
-# ---------- deviation ----------
+# -----------------------------
+# baseline vs late window
+# -----------------------------
+window = min(1000, len(numeric_df)//2)
+
+baseline = numeric_df.iloc[:window].mean()
+late = numeric_df.iloc[-window:].mean()
+
+# -----------------------------
+# deviation
+# -----------------------------
 deviation = (late - baseline).abs()
 
 top_changed = deviation.sort_values(ascending=False).head(15)
@@ -40,40 +62,48 @@ print("\nTop changed components during attack:\n")
 for name, val in top_changed.items():
     print(name, "Δ", round(val, 3))
 
-import json
-import networkx as nx
+# -----------------------------
+# load twin graph
+# -----------------------------
+if not os.path.exists("twin_graph.json"):
+    raise FileNotFoundError("Run twin_builder.py first")
 
-# ---------- load twin graph ----------
 with open("twin_graph.json") as f:
     twin_data = json.load(f)
 
 G = nx.node_link_graph(twin_data)
 
-# ---------- mark compromised nodes ----------
+print("\nTwin nodes:", len(G.nodes))
+
+# -----------------------------
+# mark compromised nodes
+# -----------------------------
 compromised = []
 
 for comp in top_changed.index:
     if comp in G.nodes:
-        G.nodes[comp]["compromised"] = True
         compromised.append(comp)
+        G.nodes[comp]["compromised"] = True
 
 print("\nCompromised nodes found in twin:", compromised)
 
-
-# ---------- derive attack stages ----------
-comp_stages = set()
+# -----------------------------
+# derive attack propagation chain
+# -----------------------------
+attack_chain = set(compromised)
 
 for node in compromised:
-    for parent in G.predecessors(node):
-        if G.nodes[parent].get("type") == "stage":
-            comp_stages.add(parent)
+    neighbors = list(G.neighbors(node))
+    attack_chain.update(neighbors)
 
-attack_path = sorted(comp_stages)
+attack_chain = sorted(attack_chain)
 
-print("\nAttack path stages:", attack_path)
+print("\nAttack propagation chain:", attack_chain)
 
-
-risk_score = len(compromised) + 2*len(attack_path)
+# -----------------------------
+# risk scoring
+# -----------------------------
+risk_score = len(compromised) + len(attack_chain)
 
 if risk_score >= 20:
     risk_level = "HIGH"
@@ -83,14 +113,17 @@ else:
     risk_level = "LOW"
 
 summary = f"""
-Attack affects {len(compromised)} components across {len(attack_path)} process stages.
-Primary impact stages: {", ".join(attack_path)}.
+Attack affects {len(compromised)} components and propagates across
+{len(attack_chain)} connected assets in the digital twin.
 Overall risk level: {risk_level}.
 """
 
+# -----------------------------
+# export report
+# -----------------------------
 attack_report = {
     "compromised_nodes": compromised,
-    "attack_stages": attack_path,
+    "attack_chain": attack_chain,
     "risk_score": risk_score,
     "risk_level": risk_level,
     "summary": summary.strip()

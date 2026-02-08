@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-# add repo root to python path
+# ---------- path setup ----------
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(ROOT_DIR)
 
@@ -15,50 +15,36 @@ st.set_page_config(page_title="GenTwin Command Center", layout="wide")
 # ---------- styling ----------
 st.markdown("""
 <style>
-.big-title {
-    font-size: 44px;
-    font-weight: 900;
-    background: linear-gradient(90deg,#00e5ff,#3b82f6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 0.2em;
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 8px rgba(59,130,246,0.4); }
+  50% { box-shadow: 0 0 22px rgba(59,130,246,0.9); }
+  100% { box-shadow: 0 0 8px rgba(59,130,246,0.4); }
 }
 
-.section-card {
-    background: linear-gradient(145deg,#0b1220,#111827);
-    border-radius: 18px;
-    padding: 22px;
-    margin-bottom: 18px;
-    border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
-}
-
-.glow-high {
-    box-shadow: 0 0 18px rgba(239,68,68,0.6);
-    border-radius: 50%;
-}
-
-.badge {
-    display:inline-block;
-    padding:6px 12px;
-    border-radius:999px;
-    font-size:14px;
-    font-weight:600;
-    background:#1f2937;
-    border:1px solid rgba(255,255,255,0.1);
-    margin-right:6px;
+.hero {
+    padding: 28px;
+    border-radius: 22px;
+    background: linear-gradient(135deg,#020617,#0f172a,#020617);
+    border: 1px solid rgba(255,255,255,0.08);
+    animation: pulseGlow 3s infinite;
 }
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("""
+<div class="hero">
+<h1>🏭 GenTwin Cyber-Physical Defense Console</h1>
+<p>Digital Twin + GenAI Attack Surface Reasoning Engine</p>
+</div>
+""", unsafe_allow_html=True)
 
+# ---------- header ----------
 st.markdown('<div class="big-title">🏭 GenTwin Security Command Center</div>', unsafe_allow_html=True)
 st.caption("Detect → Reason → Mitigate using GenAI + Digital Twin")
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-ATTACK_PATH_FILE = os.path.join(BASE_DIR, "attack_paths.json")
+ATTACK_PATH_FILE = os.path.join(ROOT_DIR, "attack_paths.json")
 
-# ---------- load ----------
+# ---------- load attack report ----------
 @st.cache_data
 def load_attack():
     if not os.path.exists(ATTACK_PATH_FILE):
@@ -69,18 +55,22 @@ def load_attack():
         return json.load(f)
 
 # ---------- graph builder ----------
-def build_graph(stages, compromised):
-    net = Network(height="500px", width="100%", bgcolor="#0f172a", font_color="white")
+def build_graph(chain, compromised):
+    net = Network(height="520px", width="100%", bgcolor="#0f172a", font_color="white")
 
-    for s in stages:
-        net.add_node(s, label=s, color="#2563eb", size=25)
+    # chain nodes
+    for n in chain:
+        net.add_node(n, label=n, color="#2563eb", size=26)
 
-    for i in range(len(stages)-1):
-        net.add_edge(stages[i], stages[i+1])
+    # chain edges
+    for i in range(len(chain)-1):
+        net.add_edge(chain[i], chain[i+1])
 
+    # compromised nodes
     for c in compromised:
         net.add_node(c, label=c, color="#ef4444", size=18)
-        net.add_edge(stages[-1], c)
+        if chain:
+            net.add_edge(chain[-1], c)
 
     net.save_graph("graph.html")
     return "graph.html"
@@ -92,19 +82,24 @@ if st.button("🚀 Run Full AI Analysis", use_container_width=True):
         data = load_attack()
         ai = generate_ai_report(ATTACK_PATH_FILE)
 
+    risk_level = data.get("risk_level", "LOW")
+    risk_score = data.get("risk_score", 0)
+    chain = data.get("attack_chain", [])
+    compromised = data.get("compromised_nodes", [])
+
+    risk_icon = {"LOW":"🟢","MEDIUM":"🟠","HIGH":"🔴"}.get(risk_level, "⚪")
+
     # ---------- metrics ----------
     c1,c2,c3 = st.columns(3)
-
-    risk_color = {"LOW":"🟢","MEDIUM":"🟠","HIGH":"🔴"}[data["risk_level"]]
 
     c1.markdown(f"""
     <div class="section-card">
     <h4>Risk Level</h4>
-    <h2>{risk_color} {data['risk_level']}</h2>
+    <h2>{risk_icon} {risk_level}</h2>
     </div>
     """, unsafe_allow_html=True)
 
-    c2.metric("Risk Score", data["risk_score"])
+    c2.metric("Risk Score", risk_score)
     c3.metric("AI Confidence", ai["confidence"])
 
     st.divider()
@@ -117,18 +112,23 @@ if st.button("🚀 Run Full AI Analysis", use_container_width=True):
 
     left,right = st.columns(2)
 
-    # ---------- LEFT COLUMN ----------
+    # ---------- LEFT ----------
     with left:
         st.subheader("🔧 Compromised Components")
-        for c in data["compromised_nodes"]:
-            st.markdown(f'<span class="badge">{c}</span>', unsafe_allow_html=True)
+        if compromised:
+            for c in compromised:
+                st.markdown(f'<span class="badge">{c}</span>', unsafe_allow_html=True)
+        else:
+            st.write("No compromised nodes detected")
 
+        st.subheader("🔗 Attack Chain")
+        if chain:
+            for s in chain:
+                st.markdown(f'<span class="badge">{s}</span>', unsafe_allow_html=True)
+        else:
+            st.write("No propagation chain derived")
 
-        st.subheader("🏭 Affected Stages")
-        for s in data["attack_stages"]:
-            st.markdown(f'<span class="badge">{s}</span>', unsafe_allow_html=True)
-
-    # ---------- RIGHT COLUMN ----------
+    # ---------- RIGHT ----------
     with right:
         st.subheader("💥 Impact")
         for x in ai["impact_summary"]:
@@ -138,6 +138,7 @@ if st.button("🚀 Run Full AI Analysis", use_container_width=True):
         for x in ai["mitigation_suggestions"]:
             st.markdown(f'<span class="badge">{x}</span>', unsafe_allow_html=True)
 
+    # ---------- gaps ----------
     st.subheader("🕳 Security Gaps")
     for g in ai["discovered_gaps"]:
         st.markdown(f'<span class="badge">{g}</span>', unsafe_allow_html=True)
@@ -145,10 +146,8 @@ if st.button("🚀 Run Full AI Analysis", use_container_width=True):
     st.divider()
 
     # ---------- graph ----------
-    st.markdown("## 🌐 Digital Twin Attack Propagation Map")
-    st.caption("Graph-based cyber-physical compromise spread")
+    st.subheader("🌐 Digital Twin Attack Propagation Map")
+    html_file = build_graph(chain, compromised)
 
-
-    html_file = build_graph(data["attack_stages"], data["compromised_nodes"])
     with open(html_file) as f:
-        st.components.v1.html(f.read(), height=520)
+        st.components.v1.html(f.read(), height=540)

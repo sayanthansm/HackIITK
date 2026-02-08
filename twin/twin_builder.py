@@ -11,7 +11,7 @@ sys.path.append(ROOT_DIR)
 from twin.auto_mapper import classify_column
 
 # ---------- load dataset ----------
-DATA_PATH = os.path.join(ROOT_DIR, "data", "test_datacenter.csv")  
+DATA_PATH = os.path.join(ROOT_DIR, "data", "test_pipeline.csv")  
 # change filename here when testing different datasets
 
 print("Loading dataset:", DATA_PATH)
