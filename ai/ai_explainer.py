@@ -92,23 +92,21 @@ def generate_ai_report(attack_path_json):
     with open(attack_path_json, "r") as f:
         data = json.load(f)
 
-    if "attack_chain" not in data or "risk_score" not in data:
-        raise ValueError("Invalid input format: attack_chain or risk_score missing")
+    if "compromised_nodes" not in data or "risk_score" not in data:
+        raise ValueError("Invalid input format")
+
+    chain = data["compromised_nodes"]
 
     return {
-        "attack_chain": data["attack_chain"],
+        "attack_chain": chain,
         "base_risk_score": data["risk_score"],
-        **run_genai_reasoning(
-            data["attack_chain"],
-            data["risk_score"]
-        )
+        **run_genai_reasoning(chain, data["risk_score"])
     }
-
-"""
-BASE_DIR = os.path.dirname(__file__)
+    
+# ---------- correct path to root attack_paths.json ----------
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ATTACK_PATH_FILE = os.path.join(BASE_DIR, "attack_paths.json")
 
 report = generate_ai_report(ATTACK_PATH_FILE)
 
 print(report)
-"""
