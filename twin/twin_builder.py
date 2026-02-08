@@ -1,61 +1,56 @@
 import pandas as pd
 import networkx as nx
 import json
+import os
+import sys
+
+# --- add project root to path ---
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(ROOT_DIR)
+
+from twin.auto_mapper import classify_column
 
 # ---------- load dataset ----------
-df = pd.read_csv("data/swat_attack.csv")
+DATA_PATH = os.path.join(ROOT_DIR, "data", "test_datacenter.csv")  
+# change filename here when testing different datasets
+
+print("Loading dataset:", DATA_PATH)
+df = pd.read_csv(DATA_PATH)
 
 # ---------- build graph ----------
-G = nx.DiGraph()
+G = nx.Graph()
 
-stages = ["P1","P2","P3","P4","P5","P6"]
+# ---------- add nodes ----------
+for col in df.columns:
+    if "ATTACK" in col.upper():
+        continue
 
-for s in stages:
-    G.add_node(s, type="stage", criticality="high")
+    ctype = classify_column(col)
+    G.add_node(col, type=ctype)
 
-for i in range(len(stages)-1):
-    G.add_edge(stages[i], stages[i+1], relation="flow")
+# ---------- connect graph ----------
+sensors = [n for n,d in G.nodes(data=True) if d["type"]=="SENSOR"]
+acts    = [n for n,d in G.nodes(data=True) if d["type"]=="ACTUATOR"]
+controls= [n for n,d in G.nodes(data=True) if d["type"]=="CONTROL"]
 
-# ---------- classify columns ----------
-sensor_cols = []
-actuator_cols = []
+for s in sensors:
+    for a in acts[:3]:
+        G.add_edge(s, a)
 
-for c in df.columns:
-    cu = c.upper()
+for a in acts:
+    for c in controls[:2]:
+        G.add_edge(a, c)
 
-    if cu.startswith(("AIT","FIT","LIT","PIT","DPIT","PH","UV")):
-        sensor_cols.append(c)
-
-    elif cu.startswith(("MV","P")):
-        actuator_cols.append(c)
-
-print("Sensors found:", len(sensor_cols))
-print("Actuators found:", len(actuator_cols))
-
-# ---------- add sensors ----------
-for s in sensor_cols:
-    stage = "P" + s[-3] if s[-3].isdigit() else "P1"
-    if stage not in stages:
-        stage = "P1"
-
-    G.add_node(s, type="sensor", criticality="medium")
-    G.add_edge(stage, s, relation="has_sensor")
-
-# ---------- add actuators ----------
-for a in actuator_cols:
-    stage = "P" + a[-3] if a[-3].isdigit() else "P1"
-    if stage not in stages:
-        stage = "P1"
-
-    G.add_node(a, type="actuator", criticality="high")
-    G.add_edge(stage, a, relation="controls")
-
-print("Total graph nodes:", len(G.nodes))
+print("Sensors:", len(sensors))
+print("Actuators:", len(acts))
+print("Controls:", len(controls))
+print("Total nodes:", len(G.nodes))
 
 # ---------- export ----------
 data = nx.node_link_data(G)
 
-with open("twin_graph.json","w") as f:
-    json.dump(data,f,indent=2)
+OUT_PATH = os.path.join(ROOT_DIR, "twin_graph.json")
+with open(OUT_PATH, "w") as f:
+    json.dump(data, f, indent=2)
 
-print("Twin graph exported with components")
+print("Twin graph exported →", OUT_PATH)
