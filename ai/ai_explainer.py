@@ -45,7 +45,7 @@ KNOWLEDGE_BASE = {
 
 def generate_explanation(attack_chain):
     templates = [
-        "The attack path demonstrates coordinated compromise across {} components, enabling physical process manipulation.",
+        "The attack path demonstrates coordinated compromise across {} , enabling physical process manipulation.",
         "Analysis reveals lateral movement through {}, increasing the likelihood of unsafe operational states.",
         "The observed sequence across {} indicates a high-risk cyber-physical attack scenario."
     ]
@@ -54,11 +54,24 @@ def generate_explanation(attack_chain):
         "PLC" if "PLC" in n.upper() else
         "SENSOR" if "SENSOR" in n.upper() else
         "ACTUATOR" if "ACTUATOR" in n.upper() else
-        "CONTROL"
+        "industrial control components"
         for n in attack_chain
     ))
 
     return random.choice(templates).format(components)
+def classify_component(node_name: str):
+    n = node_name.upper()
+
+    # sensor tags
+    if n.startswith(("LIT", "AIT", "PIT", "FIT", "DPIT", "PH", "UV")):
+        return "SENSOR"
+
+    # actuator tags
+    if n.startswith(("P", "MV")):
+        return "ACTUATOR"
+
+    # fallback
+    return "PLC"
 
 def run_genai_reasoning(attack_chain, base_risk):
     impacts = []
@@ -67,13 +80,17 @@ def run_genai_reasoning(attack_chain, base_risk):
     risk = base_risk
 
     for node in attack_chain:
-        node_upper = node.upper()
-        for key, rule in KNOWLEDGE_BASE.items():
-            if key in node_upper:
-                impacts.append(random.choice(rule["impacts"]))
-                mitigations.append(random.choice(rule["mitigations"]))
-                gaps.add(rule["gap"])
-                risk += rule["severity"]
+        comp_type = classify_component(node)
+
+        rule = KNOWLEDGE_BASE.get(comp_type)
+        if not rule:
+            continue
+
+        impacts.append(random.choice(rule["impacts"]))
+        mitigations.append(random.choice(rule["mitigations"]))
+        gaps.add(rule["gap"])
+        risk += rule["severity"]
+
 
     final_risk = min(risk, 10)
 
@@ -102,7 +119,7 @@ def generate_ai_report(attack_path_json):
         "base_risk_score": data["risk_score"],
         **run_genai_reasoning(chain, data["risk_score"])
     }
-    
+
 # ---------- correct path to root attack_paths.json ----------
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ATTACK_PATH_FILE = os.path.join(BASE_DIR, "attack_paths.json")
