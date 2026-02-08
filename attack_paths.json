@@ -1,19 +1,42 @@
 {
   "compromised_nodes": [
-    "PIPE_PRESS",
-    "LEAK_SENSOR",
-    "PUMP_LOAD",
-    "FLOW_RATE",
-    "PUMP"
+    "LIT301",
+    "LIT101",
+    "LIT401",
+    " AIT201",
+    "AIT203",
+    "AIT402",
+    "AIT503",
+    "AIT502",
+    "AIT504",
+    "PIT503",
+    "PIT501",
+    "PIT502",
+    "DPIT301",
+    "AIT202",
+    "FIT201"
   ],
   "attack_chain": [
-    "FLOW_RATE",
-    "LEAK_SENSOR",
-    "PIPE_PRESS",
-    "PUMP",
-    "PUMP_LOAD"
+    " AIT201",
+    " MV101",
+    " MV201",
+    "AIT202",
+    "AIT203",
+    "AIT402",
+    "AIT502",
+    "AIT503",
+    "AIT504",
+    "DPIT301",
+    "FIT201",
+    "LIT101",
+    "LIT301",
+    "LIT401",
+    "MV301",
+    "PIT501",
+    "PIT502",
+    "PIT503"
   ],
-  "risk_score": 10,
-  "risk_level": "MEDIUM",
-  "summary": "Attack affects 5 components and propagates across\n5 connected assets in the digital twin.\nOverall risk level: MEDIUM."
+  "risk_score": 33,
+  "risk_level": "HIGH",
+  "summary": "Attack affects 15 components and propagates across\n18 connected assets in the digital twin.\nOverall risk level: HIGH."
 }

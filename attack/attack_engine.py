@@ -7,7 +7,7 @@ import os
 # -----------------------------
 # CONFIG — change dataset here
 # -----------------------------
-DATA_PATH = "data/test_pipeline.csv"
+DATA_PATH = "data/swat_attack.csv"
 
 print("Loading dataset:", DATA_PATH)
 df = pd.read_csv(DATA_PATH)
