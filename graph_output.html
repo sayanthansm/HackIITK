@@ -33,7 +33,7 @@
 
              #mynetwork {
                  width: 100%;
-                 height: 520px;
+                 height: 560px;
                  background-color: #0b1220;
                  border: 1px solid lightgray;
                  position: relative;
@@ -88,8 +88,8 @@
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#3b82f6", "font": {"color": "white"}, "id": "FLOW_RATE", "label": "FLOW_RATE", "shape": "dot", "size": 25}, {"color": "#3b82f6", "font": {"color": "white"}, "id": "LEAK_SENSOR", "label": "LEAK_SENSOR", "shape": "dot", "size": 25}, {"color": "#3b82f6", "font": {"color": "white"}, "id": "PIPE_PRESS", "label": "PIPE_PRESS", "shape": "dot", "size": 25}, {"color": "#3b82f6", "font": {"color": "white"}, "id": "PUMP", "label": "PUMP", "shape": "dot", "size": 25}, {"color": "#3b82f6", "font": {"color": "white"}, "id": "PUMP_LOAD", "label": "PUMP_LOAD", "shape": "dot", "size": 25}]);
-                  edges = new vis.DataSet([{"from": "FLOW_RATE", "to": "LEAK_SENSOR"}, {"from": "LEAK_SENSOR", "to": "PIPE_PRESS"}, {"from": "PIPE_PRESS", "to": "PUMP"}, {"from": "PUMP", "to": "PUMP_LOAD"}, {"from": "PUMP_LOAD", "to": "PIPE_PRESS"}, {"from": "PUMP_LOAD", "to": "LEAK_SENSOR"}, {"from": "PUMP_LOAD", "to": "PUMP_LOAD"}, {"from": "PUMP_LOAD", "to": "FLOW_RATE"}]);
+                  nodes = new vis.DataSet([{"color": "#3b82f6", "font": {"color": "white"}, "id": "FLOW_RATE", "label": "FLOW_RATE", "shape": "dot", "size": 28}, {"color": "#3b82f6", "font": {"color": "white"}, "id": "LEAK_SENSOR", "label": "LEAK_SENSOR", "shape": "dot", "size": 28}, {"color": "#3b82f6", "font": {"color": "white"}, "id": "PIPE_PRESS", "label": "PIPE_PRESS", "shape": "dot", "size": 28}, {"color": "#3b82f6", "font": {"color": "white"}, "id": "PUMP", "label": "PUMP", "shape": "dot", "size": 28}, {"color": "#3b82f6", "font": {"color": "white"}, "id": "PUMP_LOAD", "label": "PUMP_LOAD", "shape": "dot", "size": 28}]);
+                  edges = new vis.DataSet([{"from": "FLOW_RATE", "to": "LEAK_SENSOR"}, {"from": "LEAK_SENSOR", "to": "PIPE_PRESS"}, {"from": "PIPE_PRESS", "to": "PUMP"}, {"from": "PUMP", "to": "PUMP_LOAD"}, {"dashes": true, "from": "PUMP_LOAD", "to": "PIPE_PRESS"}, {"dashes": true, "from": "PUMP_LOAD", "to": "LEAK_SENSOR"}, {"dashes": true, "from": "PUMP_LOAD", "to": "PUMP_LOAD"}, {"dashes": true, "from": "PUMP_LOAD", "to": "FLOW_RATE"}]);
 
                   nodeColors = {};
                   allNodes = nodes.get({ returnType: "Object" });
