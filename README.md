@@ -1,10 +1,10 @@
 # TEAM XORCISTS
 
-# 🏭 GenTwin — Generative Digital Twin Cybersecurity Analyzer
+# 🏭 GenTwin — GAN-Powered Generative Digital Twin Cybersecurity Analyzer
 
-GenTwin is a hackathon prototype that combines **Digital Twin modeling** with an **AI-assisted reasoning engine** to uncover hidden cybersecurity gaps and attack propagation paths in industrial and cyber-physical systems.
+GenTwin is a hackathon prototype that combines **Digital Twin modeling**, **GAN-based anomaly detection**, and an **AI-assisted reasoning engine** to uncover hidden cybersecurity gaps and attack propagation paths in industrial and cyber-physical systems.
 
-Instead of relying on CVE databases or signature-only detection, GenTwin builds a structural twin from telemetry datasets, detects abnormal behavior, maps compromise spread across components, and produces reasoning-driven impact and mitigation insights.
+Instead of relying on CVE databases or signature-only detection, GenTwin learns normal telemetry behavior using a **Generative Adversarial Network (GAN)**, detects anomalies through reconstruction error, maps compromise spread across system components, and produces reasoning-driven impact and mitigation insights.
 
 ---
 
@@ -12,68 +12,106 @@ Instead of relying on CVE databases or signature-only detection, GenTwin builds 
 
 Industrial and cyber-physical systems often lack:
 
-- system-level attack propagation visibility  
-- cross-component risk reasoning  
-- dataset-driven vulnerability discovery  
-- structural security gap mapping  
+* system-level attack propagation visibility
+* cross-component risk reasoning
+* dataset-driven anomaly discovery
+* structural security gap mapping
 
 Traditional security tools typically focus on:
 
-- CVE lookup
-- signature detection
-- device-level scanning
+* CVE lookup
+* signature detection
+* device-level scanning
 
 These approaches miss **behavioral anomalies** and **system-wide compromise paths**.
 
-GenTwin addresses this by combining:
+GenTwin addresses this using:
+
 Telemetry Data
+→ GAN Normal Behavior Learning
 → Digital Twin Graph
-→ Deviation Analysis
+→ GAN Anomaly Scoring
 → Compromise Mapping
 → Attack Chain Derivation
 → AI Reasoning Layer
 → Risk + Mitigation Output
+
 ---
 
 # 🧠 Core Concept
 
-GenTwin creates a **Digital Twin graph** from dataset features and uses deviation signals to simulate how compromise spreads across components. A reasoning layer then explains:
+GenTwin builds a **Digital Twin graph** from telemetry features and trains a **GAN on baseline (normal) telemetry** to learn the system’s normal operational distribution.
 
-- likely impact
-- security gaps
-- mitigation strategies
-- overall risk score
+During analysis:
 
-This produces **system-aware cybersecurity insights** rather than isolated alerts.
+* GAN generator reconstruction error is used as anomaly signal
+* High-error signals are marked as compromised components
+* Compromise spreads across the twin graph
+* AI reasoning explains impact, gaps, and mitigations
+
+This produces **system-aware cybersecurity insights**, not isolated alerts.
 
 ---
 
 # ⚙️ Architecture Overview
+
 Input Dataset (CSV telemetry)
 ↓
 Auto Component Mapper
 ↓
 Digital Twin Graph Builder
 ↓
-Deviation / Anomaly Analyzer
+**GAN Training on Normal Telemetry**
+↓
+GAN Reconstruction Error Anomaly Scoring
 ↓
 Compromised Node Detection
 ↓
-Attack Chain Derivation
+Attack Chain Derivation (Graph Propagation)
 ↓
 AI Reasoning Engine
 ↓
 Risk + Impact + Mitigation Output
 ↓
 Interactive Dashboard UI
+
+---
+
+# 🤖 GAN Role in the System
+
+GenTwin uses a lightweight GAN to model normal telemetry behavior.
+
+**Training Phase**
+
+* Train GAN on normal telemetry window
+* Generator learns feature distribution
+* Scaler saved for runtime normalization
+
+**Detection Phase**
+
+* Recent telemetry is scaled
+* Generator produces reconstructed signals
+* Reconstruction error = anomaly score
+* Top anomaly features → compromised nodes
+
+This enables:
+
+* behavior-based anomaly detection
+* dataset-driven threat discovery
+* signature-independent detection
+
 ---
 
 # 🧩 Project Structure
-twin/ → digital twin builder
-attack/ → anomaly + attack chain engine
-ai/ → reasoning engine
-ui/ → Streamlit dashboard
-data/ → sample test datasets
+
+```
+twin/     → digital twin builder
+attack/   → GAN anomaly + attack chain engine
+ai/       → reasoning engine
+ui/       → Streamlit dashboard
+data/     → datasets
+gan_train.py → GAN training module
+```
 
 ---
 
@@ -81,110 +119,28 @@ data/ → sample test datasets
 
 ## 📁 twin/ — Digital Twin Builder
 
-- auto-classifies dataset columns into component types
-- builds graph of sensors, actuators, control nodes
-- dataset-agnostic mapping logic
-- exports `twin_graph.json`
+* auto-classifies dataset columns into component types
+* builds graph of sensors, actuators, control nodes
+* dataset-agnostic mapping logic
+* exports `twin_graph.json`
 
 ---
 
-## 📁 attack/ — Attack Analyzer
+## 📁 attack/ — GAN Attack Analyzer
 
-- compares baseline vs late-window telemetry
-- computes deviation scores
-- finds top changed components
-- maps to twin graph nodes
-- derives attack chain
-- computes risk score and level
-- exports `attack_paths.json`
+* loads trained GAN + scaler
+* computes reconstruction error anomaly scores
+* ranks anomalous components
+* maps anomalies to twin graph nodes
+* derives attack propagation chain
+* computes risk score and level
+* exports `attack_paths.json`
 
----
+Detection method recorded as:
 
-## 📁 ai/ — AI Reasoning Engine
-
-Rule-guided reasoning layer that produces:
-
-- AI attack narrative
-- impact summary
-- mitigation suggestions
-- discovered security gaps
-- confidence score
-
-Uses component-type knowledge rules (sensor / actuator / control).
-
----
-
-## 📁 ui/ — Dashboard
-
-Streamlit dashboard showing:
-
-- risk metrics
-- attack chain
-- compromised components
-- AI reasoning output
-- mitigation & gap panels
-- propagation graph visualization
-
----
-
-# ✨ Key Features
-
-- ✅ Digital twin built automatically from dataset schema  
-- ✅ Dataset-agnostic engine design  
-- ✅ Graph-based attack propagation modeling  
-- ✅ AI-assisted impact & mitigation reasoning  
-- ✅ System-level risk scoring  
-- ✅ Modular pipeline architecture  
-- ✅ Interactive visualization dashboard  
-
----
-
-# 🆚 Difference from CVE Scanners
-
-| Traditional CVE Tools | GenTwin |
-|-----------------------|----------|
-Known vulnerability lookup | Dataset-driven discovery |
-Device focused | System focused |
-Signature based | Behavior deviation based |
-Static analysis | Structural propagation aware |
-No reasoning layer | AI reasoning output |
-
----
-
-# 📊 Expected Input Dataset Format
-
-CSV with:
-
-- numeric telemetry columns
-- sensor / actuator / control signals
-- one label column containing:
-  - `Attack`
-  - `Normal`
-
-Example feature names:
-
----
-
-# 🔬 Module Details
-
-## 📁 twin/ — Digital Twin Builder
-
-- auto-classifies dataset columns into component types
-- builds graph of sensors, actuators, control nodes
-- dataset-agnostic mapping logic
-- exports `twin_graph.json`
-
----
-
-## 📁 attack/ — Attack Analyzer
-
-- compares baseline vs late-window telemetry
-- computes deviation scores
-- finds top changed components
-- maps to twin graph nodes
-- derives attack chain
-- computes risk score and level
-- exports `attack_paths.json`
+```
+GAN_reconstruction_error
+```
 
 ---
 
@@ -192,13 +148,13 @@ Example feature names:
 
 Rule-guided reasoning layer that produces:
 
-- AI attack narrative
-- impact summary
-- mitigation suggestions
-- discovered security gaps
-- confidence score
+* AI attack narrative
+* impact summary
+* mitigation suggestions
+* discovered security gaps
+* confidence score
 
-Uses component-type knowledge rules (sensor / actuator / control).
+Reasoning is component-type aware (sensor / actuator / control).
 
 ---
 
@@ -206,36 +162,40 @@ Uses component-type knowledge rules (sensor / actuator / control).
 
 Streamlit dashboard showing:
 
-- risk metrics
-- attack chain
-- compromised components
-- AI reasoning output
-- mitigation & gap panels
-- propagation graph visualization
+* risk metrics
+* attack chain
+* compromised components
+* GAN-based detection flag
+* AI reasoning output
+* mitigation & gap panels
+* propagation graph visualization
 
 ---
 
 # ✨ Key Features
 
-- ✅ Digital twin built automatically from dataset schema  
-- ✅ Dataset-agnostic engine design  
-- ✅ Graph-based attack propagation modeling  
-- ✅ AI-assisted impact & mitigation reasoning  
-- ✅ System-level risk scoring  
-- ✅ Modular pipeline architecture  
-- ✅ Interactive visualization dashboard  
+* ✅ GAN-based anomaly detection
+* ✅ Digital twin built automatically from dataset schema
+* ✅ Behavior-driven threat discovery
+* ✅ Graph-based attack propagation modeling
+* ✅ AI-assisted impact & mitigation reasoning
+* ✅ System-level risk scoring
+* ✅ Dataset-agnostic design
+* ✅ Modular pipeline architecture
+* ✅ Interactive visualization dashboard
 
 ---
 
 # 🆚 Difference from CVE Scanners
 
-| Traditional CVE Tools | GenTwin |
-|-----------------------|----------|
-Known vulnerability lookup | Dataset-driven discovery |
-Device focused | System focused |
-Signature based | Behavior deviation based |
-Static analysis | Structural propagation aware |
-No reasoning layer | AI reasoning output |
+| Traditional CVE Tools      | GenTwin                |
+| -------------------------- | ---------------------- |
+| Known vulnerability lookup | GAN behavior learning  |
+| Device focused             | System focused         |
+| Signature based            | Behavior anomaly based |
+| Static scan                | Telemetry-driven       |
+| No propagation model       | Twin graph propagation |
+| No reasoning layer         | AI reasoning output    |
 
 ---
 
@@ -243,113 +203,146 @@ No reasoning layer | AI reasoning output |
 
 CSV with:
 
-- numeric telemetry columns
-- sensor / actuator / control signals
-- one label column containing:
-  - `Attack`
-  - `Normal`
+* numeric telemetry columns
+* sensor / actuator / control signals
+* one label column containing:
+
+  * Attack
+  * Normal
 
 Example feature names:
 
-LIT101 level sensor
-AIT201 analyzer
-P101 pump
-MV201 valve
-TEMP temperature
-FLOW flow rate
+```
+LIT101
+AIT201
+P101
+MV201
+TEMP
+FLOW
+```
 
-Engine auto-maps component types from names.
+Component types are auto-mapped from names.
 
 ---
 
 # ▶️ How to Run
 
-## 1️⃣ Build Digital Twin
+## 1️⃣ Train GAN
+
+```bash
+python gan_train.py
+```
+
+Outputs:
+
+```
+gan_generator.pt
+gan_scaler.pkl
+```
+
+---
+
+## 2️⃣ Build Digital Twin
 
 ```bash
 python twin/twin_builder.py
+```
 
-Output: twin_graph.json
+Output:
 
- Run Attack Analyzer:
+```
+twin_graph.json
+```
+
+---
+
+## 3️⃣ Run Attack Analyzer (GAN Enabled)
+
+```bash
 python attack/attack_engine.py
+```
 
-Output: attack_paths.json
+Output:
 
-Run AI Reasoning:
+```
+attack_paths.json
+```
+
+---
+
+## 4️⃣ Run AI Reasoning
+
+```bash
 python ai/ai_explainer.py
+```
 
-Launch Dashboard:
+---
+
+## 5️⃣ Launch Dashboard
+
+```bash
 streamlit run ui/app.py
+```
 
-🧪 Validation
+---
 
-The engine was tested on multiple synthetic datasets to verify:
+# 🧪 Validation
 
-cross-domain component mapping
+Tested across synthetic cross-domain datasets:
 
-universal twin construction
+* HVAC systems
+* factory telemetry
+* datacenter metrics
+* pipeline sensors
+* power grid signals
 
-stable attack chain derivation
+Validated for:
 
-consistent reasoning outputs
+* twin construction stability
+* GAN anomaly ranking
+* attack chain derivation
+* reasoning consistency
 
-Test domains include:
+---
 
-HVAC systems
+# 🚀 Novel Contributions
 
-factory telemetry
+* GAN-based telemetry anomaly detection
+* Dataset-driven digital twin construction
+* Graph-based compromise propagation modeling
+* AI reasoning over system structure
+* Cross-domain cyber-physical analysis
+* Behavior-first security discovery
 
-datacenter metrics
+---
 
-pipeline sensors
+# ⚠️ Limitations
 
-power grid signals
+* Lightweight GAN (hackathon scale)
+* Rule-guided reasoning engine
+* Not a production vulnerability scanner
+* Twin topology is inferred
+* Mitigations are advisory
 
-🚀 Novel Contributions
+---
 
-Dataset-driven digital twin construction
+# 🔮 Future Work
 
-Graph-based compromise propagation modeling
+* Real-time telemetry streaming
+* LLM reasoning integration
+* temporal attack simulation
+* automated mitigation planning
+* SOC workflow integration
+* adaptive topology learning
 
-AI reasoning over system structure
+---
 
-Cross-component security gap inference
-
-Domain-agnostic cyber-physical analysis
-
-⚠️ Limitations
-
-Prototype reasoning engine (rule-guided, not full LLM)
-
-Not a production vulnerability scanner
-
-Depends on telemetry quality
-
-Twin topology is inferred, not real wiring
-
-Mitigations are advisory suggestions
-
-🔮 Future Work
-
-Real-time telemetry ingestion
-
-LLM-based reasoning integration
-
-Temporal attack simulation
-
-Automated mitigation planning
-
-SOC workflow integration
-
-Adaptive topology learning
-
-👥 Team
+# 👥 Team XORCISTS
 
 Digital Twin Engine
-
+GAN Detection Engine
 Attack Analyzer
-
 AI Reasoning Layer
-
 Visualization Dashboard
+
+---
