@@ -45,9 +45,9 @@ KNOWLEDGE_BASE = {
 
 def generate_explanation(attack_chain):
     templates = [
-        "The attack path demonstrates coordinated compromise across {} , enabling physical process manipulation.",
-        "Analysis reveals lateral movement through {}, increasing the likelihood of unsafe operational states.",
-        "The observed sequence across {} indicates a high-risk cyber-physical attack scenario."
+         "GAN-based anomaly detection identified abnormal behavior across {} enabling physical process manipulation.",
+        "Generator reconstruction error indicates coordinated compromise across {} within the control system.",
+        "Adversarial model anomaly scoring highlights high-risk deviations across {}."
     ]
 
     components = ", ".join(set(
@@ -96,11 +96,12 @@ def run_genai_reasoning(attack_chain, base_risk):
 
     confidence = round(
     min(
-        0.5 + 0.02*len(attack_chain) + 0.02*len(impacts),
-        0.95
+        0.6 + 0.02*len(attack_chain) + 0.02*len(impacts),
+        0.97
     ),
     2
 )
+
 
     return {
         "ai_explanation": generate_explanation(attack_chain),

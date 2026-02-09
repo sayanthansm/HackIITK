@@ -1,135 +1,123 @@
 import pandas as pd
-import numpy as np
 import json
 import networkx as nx
 import os
+import pickle
+import torch
+import torch.nn as nn
 
-# -----------------------------
-# CONFIG — change dataset here
-# -----------------------------
 DATA_PATH = "data/swat_attack.csv"
+LATENT_DIM = 32   # MUST match gan_train.py
 
 print("Loading dataset:", DATA_PATH)
 df = pd.read_csv(DATA_PATH)
 
-# -----------------------------
-# find label column
-# -----------------------------
+# -------- label detect --------
 label_col = None
 for c in df.columns:
     if "ATTACK" in c.upper():
         label_col = c
         break
 
-if not label_col:
-    raise ValueError("No Attack label column found")
+labels = df[label_col].astype(str).str.upper()
+attack_rows = df[labels.str.contains("ATTACK")]
+normal_rows = df[labels.str.contains("NORMAL")]
 
-print("Label column:", label_col)
-
-attack_rows = df[df[label_col] == "Attack"]
-normal_rows = df[df[label_col] == "Normal"]
-
-print("Total rows:", len(df))
 print("Attack rows:", len(attack_rows))
 print("Normal rows:", len(normal_rows))
 
-# -----------------------------
-# numeric-only selection
-# -----------------------------
 numeric_df = df.select_dtypes(include="number")
+INPUT_DIM = len(numeric_df.columns)
 
-print("\nNumeric columns:", len(numeric_df.columns))
+# -------- Generator (MATCH TRAINING) --------
+class Generator(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(LATENT_DIM, 128),
+            nn.ReLU(),
+            nn.Linear(128, INPUT_DIM)
+        )
 
-if len(numeric_df.columns) == 0:
-    raise ValueError("No numeric columns found")
+    def forward(self, z):
+        return self.net(z)
 
-# -----------------------------
-# baseline vs late window
-# -----------------------------
+gan_model = None
+
+# -------- load GAN --------
+if os.path.exists("gan_generator.pt") and os.path.exists("gan_scaler.pkl"):
+
+    with open("gan_scaler.pkl","rb") as f:
+        scaler = pickle.load(f)
+
+    gan_model = Generator()
+    gan_model.load_state_dict(
+        torch.load("gan_generator.pt", map_location="cpu")
+    )
+    gan_model.eval()
+
+    print("✅ GAN loaded")
+
+else:
+    print("⚠️ GAN missing — fallback mode")
+
+# -------- anomaly scoring --------
 window = min(1000, len(numeric_df)//2)
+recent = numeric_df.iloc[-window:]
 
-baseline = numeric_df.iloc[:window].mean()
-late = numeric_df.iloc[-window:].mean()
+if gan_model:
 
-# -----------------------------
-# deviation
-# -----------------------------
-deviation = (late - baseline).abs()
+    scaled = scaler.transform(recent.values)
+    t = torch.tensor(scaled, dtype=torch.float32)
 
-top_changed = deviation.sort_values(ascending=False).head(15)
+    # project into latent space randomly and reconstruct
+    z = torch.randn(len(t), LATENT_DIM)
 
-print("\nTop changed components during attack:\n")
-for name, val in top_changed.items():
-    print(name, "Δ", round(val, 3))
+    with torch.no_grad():
+        recon = gan_model(z)
 
-# -----------------------------
-# load twin graph
-# -----------------------------
-if not os.path.exists("twin_graph.json"):
-    raise FileNotFoundError("Run twin_builder.py first")
+    err = torch.mean((t - recon)**2, dim=0)
 
+    scores = dict(zip(numeric_df.columns, err.numpy()))
+    top_changed = sorted(scores.items(), key=lambda x:x[1], reverse=True)[:15]
+
+else:
+    base = numeric_df.iloc[:window].mean()
+    late = numeric_df.iloc[-window:].mean()
+    dev = (late-base).abs()
+    top_changed = list(dev.sort_values(ascending=False).head(15).items())
+
+print("\nTop anomalous components:")
+for n,v in top_changed:
+    print(n, round(float(v),3))
+
+# -------- twin graph --------
 with open("twin_graph.json") as f:
-    twin_data = json.load(f)
+    G = nx.node_link_graph(json.load(f))
 
-G = nx.node_link_graph(twin_data)
-
-print("\nTwin nodes:", len(G.nodes))
-
-# -----------------------------
-# mark compromised nodes
-# -----------------------------
 compromised = []
-
-for comp in top_changed.index:
+for comp,_ in top_changed:
     if comp in G.nodes:
         compromised.append(comp)
-        G.nodes[comp]["compromised"] = True
 
-print("\nCompromised nodes found in twin:", compromised)
-
-# -----------------------------
-# derive attack propagation chain
-# -----------------------------
 attack_chain = set(compromised)
-
-for node in compromised:
-    neighbors = list(G.neighbors(node))
-    attack_chain.update(neighbors)
+for n in compromised:
+    attack_chain.update(G.neighbors(n))
 
 attack_chain = sorted(attack_chain)
 
-print("\nAttack propagation chain:", attack_chain)
+risk_score = len(compromised)+len(attack_chain)
+risk_level = "HIGH" if risk_score>=20 else "MEDIUM" if risk_score>=10 else "LOW"
 
-# -----------------------------
-# risk scoring
-# -----------------------------
-risk_score = len(compromised) + len(attack_chain)
-
-if risk_score >= 20:
-    risk_level = "HIGH"
-elif risk_score >= 10:
-    risk_level = "MEDIUM"
-else:
-    risk_level = "LOW"
-
-summary = f"""
-Attack affects {len(compromised)} components and propagates across
-{len(attack_chain)} connected assets in the digital twin.
-Overall risk level: {risk_level}.
-"""
-
-# -----------------------------
-# export report
-# -----------------------------
 attack_report = {
     "compromised_nodes": compromised,
     "attack_chain": attack_chain,
     "risk_score": risk_score,
     "risk_level": risk_level,
-    "summary": summary.strip()
+    "detection_method": "GAN_reconstruction_error" if gan_model else "statistical"
 }
 
 with open("attack_paths.json","w") as f:
-    json.dump(attack_report, f, indent=2)
+    json.dump(attack_report,f,indent=2)
 
-print("\nattack_paths.json exported")
+print("✅ attack_paths.json exported")

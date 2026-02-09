@@ -45,6 +45,11 @@ def run_pipeline():
 
     print("\n🔥 FULL GEN-TWIN PIPELINE COMPLETE")
 
+    run_step(
+        "streamlit run ui/app.py",
+        "Launching Security Dashboard"
+    )
+
 
 if __name__ == "__main__":
     run_pipeline()
