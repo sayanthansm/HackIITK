@@ -212,7 +212,7 @@
       "id": "P603"
     }
   ],
-  "edges": [
+  "links": [
     {
       "source": " Timestamp",
       "target": " MV101"

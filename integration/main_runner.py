@@ -42,7 +42,12 @@ def run_pipeline():
         "python ai/ai_explainer.py",
         "AI Reasoning Engine"
     )
-
+    
+    run_step(
+        "streamlit run ui/app.py",
+        "Launching Security Dashboard"
+    )
+    
     print("\n🔥 FULL GEN-TWIN PIPELINE COMPLETE")
 
 
